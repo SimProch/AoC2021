@@ -43,4 +43,4 @@ function getTrueBits(data, index) {
     return result;
 }
 console.log(getOxygen());
-// 3882564
+// 3385170

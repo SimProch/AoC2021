@@ -1,0 +1,22 @@
+{
+  "name": "@simproch/aoc2021",
+  "version": "1.0.0",
+  "description": "Repository for AoC 2021",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SimProch/AoC2021.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SimProch/AoC2021/issues"
+  },
+  "homepage": "https://github.com/SimProch/AoC2021#readme",
+  "dependencies": {
+    "typescript": "^4.5.2"
+  }
+}

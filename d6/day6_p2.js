@@ -1,38 +1,35 @@
 
-// import { d6_data } from "./input.js";
+import { d6_data } from "./input.js";
 
 // https://adventofcode.com/2021/day/6
-const data = [3, 4, 3, 1, 2]
 const TIMER_RESET_VALUE = 6;
 const NEW_TIMER_VALUE = 8;
 const MAX_NUMBER_OF_DAYS = 256;
-// daySix(d6_data)
-daySix(data)
+daySix(d6_data)
 
-function daySix(initialStateData) {
-    const data = [...initialStateData]
-    const fishToValueFnDictionary = {};
+function daySix(data) {
+    const daysToBirthDictionary = {};
+    new Array(NEW_TIMER_VALUE + 1).fill(0).forEach((_, i) => daysToBirthDictionary[i] = 0);
+    data.forEach((x) => {
+        if (!daysToBirthDictionary[x]) daysToBirthDictionary[x] = 0;
+        daysToBirthDictionary[x]++;
+    });
+
     for (let numberOfDays = 0; numberOfDays < MAX_NUMBER_OF_DAYS; numberOfDays++) {
-        const length = data.length;
-        for (let i = 0; i < length; i++) {
-            const currentDatum = data[i];
-            fishToValueFnDictionary[i] = getFishValueFn(currentDatum);
-            let timerValueFn = fishToValueFnDictionary[i];
-            let value = timerValueFn();
-            data[i] = value;
-            
-        }
-        
-        function getFishValueFn(initialValue) {
-            let value = initialValue;
-            return () => {
-                if (value === 0) {
-                    data.push(NEW_TIMER_VALUE)
-                    return TIMER_RESET_VALUE
-                }
-                return --value
-            }
-        }
+        const daysToBirthDictionaryCopy = JSON.parse(JSON.stringify(daysToBirthDictionary));
+        const daysToBirthKeys = Object.keys(daysToBirthDictionaryCopy);
+        const [oneDayToBirth, ...otherDays] = daysToBirthKeys;
+        const firstFishToBirth = daysToBirthDictionaryCopy[oneDayToBirth];
+
+        otherDays.forEach(key => {
+            const fishToBirth = +daysToBirthDictionary[key];
+            daysToBirthDictionary[key - 1] = fishToBirth;
+        })
+
+        daysToBirthDictionary[NEW_TIMER_VALUE] = firstFishToBirth;
+        daysToBirthDictionary[TIMER_RESET_VALUE] += firstFishToBirth;
     }
-    console.log(data.length);
+    const result = Object.values(daysToBirthDictionary).reduce((x,y) => x + y, 0);
+    console.log(result);
+
 }

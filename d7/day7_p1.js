@@ -1,37 +1,20 @@
-// import { d6_data } from "./input.js";
+import { d7_data } from "./input.js";
 
-// https://adventofcode.com/2021/day/6
-const data = [3, 4, 3, 1, 2]
-const TIMER_RESET_VALUE = 6;
-const NEW_TIMER_VALUE = 8;
-const MAX_NUMBER_OF_DAYS = 80;
-// daySix(d6_data)
-daySix(data)
+// https://adventofcode.com/2021/day/7
+const data = [16,1,2,0,4,2,7,1,2,14]
+daySeven(data)
+daySeven(d7_data)
 
-function daySix(initialStateData) {
-    const data = [...initialStateData]
-    const fishToValueFnDictionary = {};
-    for (let numberOfDays = 0; numberOfDays < MAX_NUMBER_OF_DAYS; numberOfDays++) {
-        const length = data.length;
-        for (let i = 0; i < length; i++) {
-            const currentDatum = data[i];
-            fishToValueFnDictionary[i] = getFishValueFn(currentDatum);
-            let timerValueFn = fishToValueFnDictionary[i];
-            let value = timerValueFn();
-            data[i] = value;
-            
-        }
-        
-        function getFishValueFn(initialValue) {
-            let value = initialValue;
-            return () => {
-                if (value === 0) {
-                    data.push(NEW_TIMER_VALUE)
-                    return TIMER_RESET_VALUE
-                }
-                return --value
-            }
-        }
+function daySeven(pathing) {
+    const max = Math.max(...pathing);
+    const fuelDictionary = {};
+    for (let i = 0; i < max; i++) fuelDictionary[i] = 0;
+    const fuelDictionaryKeys = Object.keys(fuelDictionary);
+    for (let i = 0; i < pathing.length; i++) {
+        const current = pathing[i];
+        fuelDictionaryKeys.forEach(i => fuelDictionary[i] += Math.abs(current - (+i)));
     }
-    console.log(data.length);
+    const fuelUsage = Object.values(fuelDictionary);
+    const lowestFuelUsage = Math.min(...fuelUsage);
+    console.log(lowestFuelUsage)
 }

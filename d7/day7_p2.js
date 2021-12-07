@@ -1,35 +1,41 @@
+import { d7_data } from "./input.js";
 
-import { d6_data } from "./input.js";
+// https://adventofcode.com/2021/day/7
+const data = [16, 1, 2, 0, 4, 2, 7, 1, 2, 14]
+daySeven(data)
+daySeven(d7_data)
 
-// https://adventofcode.com/2021/day/6
-const TIMER_RESET_VALUE = 6;
-const NEW_TIMER_VALUE = 8;
-const MAX_NUMBER_OF_DAYS = 256;
-daySix(d6_data)
+function daySeven(pathing) {
+    const max = Math.max(...pathing);
+    const fuelUsageDictionary = getUsageDictionary();
+    fillFuelUsage();
+    const fuelUsage = Object.values(fuelUsageDictionary);
+    const lowestFuelUsage = Math.min(...fuelUsage);
+    console.log(lowestFuelUsage)
 
-function daySix(data) {
-    const daysToBirthDictionary = {};
-    new Array(NEW_TIMER_VALUE + 1).fill(0).forEach((_, i) => daysToBirthDictionary[i] = 0);
-    data.forEach((x) => {
-        if (!daysToBirthDictionary[x]) daysToBirthDictionary[x] = 0;
-        daysToBirthDictionary[x]++;
-    });
-
-    for (let numberOfDays = 0; numberOfDays < MAX_NUMBER_OF_DAYS; numberOfDays++) {
-        const daysToBirthDictionaryCopy = JSON.parse(JSON.stringify(daysToBirthDictionary));
-        const daysToBirthKeys = Object.keys(daysToBirthDictionaryCopy);
-        const [oneDayToBirth, ...otherDays] = daysToBirthKeys;
-        const firstFishToBirth = daysToBirthDictionaryCopy[oneDayToBirth];
-
-        otherDays.forEach(key => {
-            const fishToBirth = +daysToBirthDictionary[key];
-            daysToBirthDictionary[key - 1] = fishToBirth;
-        })
-
-        daysToBirthDictionary[NEW_TIMER_VALUE] = firstFishToBirth;
-        daysToBirthDictionary[TIMER_RESET_VALUE] += firstFishToBirth;
+    function getUsageDictionary() {
+        const fuelUsageDictionary = {};
+        for (let i = 0; i < max; i++) fuelUsageDictionary[i] = 0;
+        return fuelUsageDictionary
     }
-    const result = Object.values(daysToBirthDictionary).reduce((x,y) => x + y, 0);
-    console.log(result);
 
+    function fillFuelUsage() {
+        for (let i = 0; i < pathing.length; i++) {
+            const current = pathing[i];
+            for (let key in fuelUsageDictionary){
+                const alignTo = +key;
+                if (alignTo === current) continue;
+
+                let result = 0;
+                let smaller = current < alignTo ? current : alignTo;
+                let higher = alignTo < current ? current : alignTo;
+                let counter = 1;
+                for (let i = smaller; i < higher; i++) {
+                    result += counter
+                    counter++
+                }
+                fuelUsageDictionary[key] += result;
+            };
+        }
+    }
 }

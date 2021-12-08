@@ -17,19 +17,19 @@ const numberToSegmentDict = {
 const uniqueSegments = [1, 4, 7, 8];
 const segmentsLengthDict = {};
 uniqueSegments.forEach(x => segmentsLengthDict[x] = numberToSegmentDict[x].length);
-let shouldLog = true;
 
-// issue at key 3, 4
-
-dayEight(d8_test_data);
+dayEight(d8_data);
 
 function dayEight(data) {
     const outputData = getIndexToWireDictionary(data)
     const dataKeys = Object.keys(outputData);
     findKeysToDecode();
-    getResult();
+    const result = getResult();
+    console.log(result);
+    return result;
 
     function getResult() {
+        let result = 0;
         dataKeys.forEach(key => {
             const output = outputData[key].output;
             const legend = outputData[key].key;
@@ -39,9 +39,10 @@ function dayEight(data) {
                 const value = legend[sortedOutput];
                 resultNumbers.push(value);
             })
-            console.log(output);
-            console.log(resultNumbers);
+            const resultValue = +resultNumbers.join("");
+            result += resultValue;
         });
+        return result;
     }
 
     function findKeysToDecode() {
@@ -85,32 +86,18 @@ function findAllSegmentCodes(outputData, key) {
     decodeForOne();
     decodeForFour(four);
     decodeForSeven(seven);
-    const [six, nine] = findNineAndSix();
-    confirmOneSegments(nine);
+    const [six, nine, zero] = findNineAndSix();
     confirmFourSegments(four);
+    confirmOneSegments(nine);
     return decodedToCoded;
 
     function confirmFourSegments(four) {
-        // we know all segments except middle and top left
-        // we must decode last 2 segments exactly
-        // This is shared between 5 and 2. So we remove from 4 digits that are not in either
-        const five = numberToSegmentDict[5];
-        const two = numberToSegmentDict[2];
-        let codedTwo = "";
-        let codedFive = "";
-        // encode 5
-        for (let i = 0; i < five.length; i++) {
-            const char = five[i];
-            codedFive += decodedToCoded[char];
-        }
-        // encode 2
-        for (let i = 0; i < two.length; i++) {
-            const char = two[i];
-            codedTwo += decodedToCoded[char];
-        }
-
-        const middle = four.split("").find(i => codedTwo.includes(i) && codedFive.includes(i))
-        if (decodedToCoded["d"] !== middle) {
+        // zero has all but middle
+        // remove from four all 
+        // only middle remains
+        let toDecode = four.replace(decodedToCoded["c"], "").replace(decodedToCoded["f"], "");
+        zero.split("").forEach(i => (toDecode = toDecode.replace(i, "")));
+        if (decodedToCoded["d"] !== toDecode) {
             const d = decodedToCoded["b"];
             const b = decodedToCoded["d"];
             decodedToCoded["b"] = b;
@@ -138,16 +125,21 @@ function findAllSegmentCodes(outputData, key) {
 
     function findNineAndSix() {
         let foundLetters = Object.values(decodedToCoded);
-        const possibleNinesAndSixes = joinedData.filter(i => numberToSegmentDict[9].length === i.length);
+        let possibleNinesSixesZeroes = joinedData.filter(i => numberToSegmentDict[9].length === i.length);
         const nine = findNine();
         foundLetters = Object.values(decodedToCoded);
+        const possibleSixes = possibleNinesSixesZeroes.filter(i => 
+            !i.includes(decodedToCoded["c"]) ||
+            !i.includes(decodedToCoded["f"])
+        );
         const six = findSix();
-        return [six, nine];
+        const zero = possibleNinesSixesZeroes.filter(i => i !== nine && i !== six)[0];
+        return [six, nine, zero];
 
         function findNine() {
             // we know for sure which si bottom segment
-            for (let i = 0; i < possibleNinesAndSixes.length; i++) {
-                let possibleNine = possibleNinesAndSixes[i];
+            for (let i = 0; i < possibleNinesSixesZeroes.length; i++) {
+                let possibleNine = possibleNinesSixesZeroes[i];
                 let confirmedNine = possibleNine;
                 foundLetters.forEach(i => possibleNine = possibleNine.replace(i, ""));
                 if (possibleNine.length === 1) {
@@ -159,8 +151,8 @@ function findAllSegmentCodes(outputData, key) {
 
         function findSix() {
             // after decoding for 9, we know for sure which is bottom left segment
-            for (let i = 0; i < possibleNinesAndSixes.length; i++) {
-                let possibleSix = possibleNinesAndSixes[i];
+            for (let i = 0; i < possibleSixes.length; i++) {
+                let possibleSix = possibleSixes[i];
                 let confirmedSix = possibleSix;
                 foundLetters.forEach(i => possibleSix = possibleSix.replace(i, ""));
                 if (possibleSix.length === 1) {

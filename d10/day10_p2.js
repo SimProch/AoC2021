@@ -1,10 +1,11 @@
 import { d10_data, d10_test_data } from "./input.js";
+// https://adventofcode.com/2021/day/10
 
-const charValues = {
-    ")": 3,
-    "]": 57,
-    "}": 1197,
-    ">": 25137
+const completingValues = {
+    ")": 1,
+    "]": 2,
+    "}": 3,
+    ">": 4
 }
 
 const openArray = [
@@ -21,21 +22,38 @@ const openToClosed = {
     "<": ">"
 }
 
-// https://adventofcode.com/2021/day/10
 dayTen(d10_test_data);
-// dayTen(d10_data);
+dayTen(d10_data);
 
 function dayTen(data) {
-    const potentialErrors = [];
+    const potentialIncomplete = getPotentialIncomplete(data);
+    const resultValues = getCompletedBracketValues(potentialIncomplete);
+    const median = getMedian();
+    console.log(median);
+
+    function getMedian() {
+        const isOdd = resultValues.length % 2;
+        if (isOdd) {
+            const position = (resultValues.length - 1) / 2;
+            return resultValues[position];
+        } else {
+            const position1 = resultValues.length / 2;
+            const position2 = position1 - 1;
+            return (resultValues[position1] + resultValues[position2]) / 2
+        }
+    }
+}
+
+function getPotentialIncomplete(data) {
+    const potentialIncomplete = [];
     for (let i = 0; i < data.length; i++) {
         const string = data[i];
         const incorrectBracket = getExpectedAndAcquired(string);
-        potentialErrors.push(incorrectBracket)
+        potentialIncomplete.push(incorrectBracket);
     }
-    const resultErrors = potentialErrors.filter(Boolean);
-    const count = resultErrors.reduce((x,y) => x + charValues[y.got],0);
-    console.log(count);
+    return potentialIncomplete;
 }
+
 
 function getExpectedAndAcquired(inputString) {
     const lastOpenArray = [];
@@ -54,7 +72,7 @@ function getExpectedAndAcquired(inputString) {
         if (closesLastItem) lastOpenArray.pop();
         else return { expected, got }
     }
-    return false;
+    return lastOpenArray;
 }
 
 function isOpenBracket(char) {
@@ -65,3 +83,16 @@ function isOpenBracket(char) {
     return false;
 }
 
+
+function getCompletedBracketValues(potentialIncomplete) {
+    const resultIncomplete = potentialIncomplete.filter(i => Array.isArray(i));
+    const completingBrackets = resultIncomplete.map(incompleteBrackets => {
+        let completedBrackets = incompleteBrackets.map(bracket => openToClosed[bracket]).reverse();
+        return completedBrackets;
+    });
+    const resultValues = completingBrackets.map(brackets => {
+        const value = brackets.reduce((x, y) => x * 5 + completingValues[y], 0);
+        return value;
+    }).sort((x, y) => x - y);
+    return resultValues;
+}

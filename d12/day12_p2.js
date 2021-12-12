@@ -34,10 +34,10 @@ function getCharFromAscii(charCode) {
     return String.fromCodePoint(charCode);
 }
 
-// const assert = (a,b) => {
-//     if (a !== b) console.error("Incorrect");
-//     else console.log("passed");
-// };
+const assert = (a,b) => {
+    if (a !== b) console.error("Incorrect");
+    else console.log("passed");
+};
 
 const firstTestData = dayTwelve(d12_test_data);
 const secondTestData = dayTwelve(d12_test_data_v2);

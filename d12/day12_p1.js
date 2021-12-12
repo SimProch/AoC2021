@@ -42,12 +42,11 @@ const assert = (a,b) => {
 const firstTestData = dayTwelve(d12_test_data);
 const secondTestData = dayTwelve(d12_test_data_v2);
 const thirdTestData = dayTwelve(d12_test_data_v3);
+const result = dayTwelve(d12_data);
 assert(firstTestData.size, 10)
 assert(secondTestData.size, 19)
 assert(thirdTestData.size, 226)
-
-const result = dayTwelve(d12_data);
-console.log(result.size);
+assert(result.size, 5874)
 
 function dayTwelve(data) {
     const tree = getDataTreeStructure();

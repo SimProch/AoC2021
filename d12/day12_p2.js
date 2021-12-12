@@ -34,19 +34,20 @@ function getCharFromAscii(charCode) {
     return String.fromCodePoint(charCode);
 }
 
-const assert = (a,b) => {
-    if (a !== b) console.error("Incorrect");
-    else console.log("passed");
-};
+// const assert = (a,b) => {
+//     if (a !== b) console.error("Incorrect");
+//     else console.log("passed");
+// };
 
 const firstTestData = dayTwelve(d12_test_data);
 const secondTestData = dayTwelve(d12_test_data_v2);
 const thirdTestData = dayTwelve(d12_test_data_v3);
-assert(firstTestData.size, 10)
-assert(secondTestData.size, 19)
-assert(thirdTestData.size, 226)
-
 const result = dayTwelve(d12_data);
+assert(firstTestData.size, 36)
+assert(secondTestData.size, 103)
+assert(thirdTestData.size, 3509)
+assert(result.size, 153592)
+
 console.log(result.size);
 
 function dayTwelve(data) {
@@ -58,7 +59,12 @@ function dayTwelve(data) {
     function getDataTreeStructure() {
         const tree = {};
         for (let i = 0; i < data.length; i++) {
-            const [from, to] = data[i].split("-");
+            let [from, to] = data[i].split("-");
+            if (to === "start" || from === "end") {
+                let to1 = from;
+                from = to;
+                to = to1;
+            }
             if (!tree[from]) tree[from] = {};
             if (to !== "end" && !tree[to]) tree[to] = {};
             if (!tree[from][to]) tree[from][to] = {};
@@ -103,8 +109,10 @@ function pathHasMultipleLowercase(path) {
         const isLowercase = current.split("").every(curr => lowerCaseLetters.includes(curr));
         if (isLowercase) {
             lowerCaseCount[current]++
-            if (lowerCaseCount[current] > 1) return true;
+            if (lowerCaseCount[current] > 2) return true;
         }
+        const values = Object.values(lowerCaseCount);
+        if (values.filter(i => i > 1).length > 1) return true;
     }
     return false;
 }

@@ -1,5 +1,3 @@
-
-
 export const d15_test_data = [
     "1163751742",
     "1381373672",
@@ -12,6 +10,7 @@ export const d15_test_data = [
     "1293138521",
     "2311944581",
 ]
+export const d15_test_data_v2 = updateDay15TestData(d15_test_data)
 
 export const d15_data = [
     "1219917144152175521192937532735222272149142113771132143147736143821412611744118289583116354731774896",
@@ -115,3 +114,42 @@ export const d15_data = [
     "7361414488876111685422912712199945339791122321313661373284819524231223276991835456242151321911173365",
     "6132116139116159519661211214183822195812917735711165919172937611282417713718496254611651115137154211"
 ]
+export const d15_data_v2 = updateDay15TestData(d15_data)
+
+
+export function updateDay15TestData(data) {
+    const updatedRows = JSON.parse(JSON.stringify(data));
+    updateRows();
+    const updatedColumns = JSON.parse(JSON.stringify(updatedRows));
+    updateColumns();
+    return updatedColumns;
+
+    function updateRows() {
+        for (let c = 1; c < 5; c++) {
+            for (let i = 0; i < data.length; i++) {
+                let row = "";
+                for (let j = 0; j < data[i].length; j++) {
+                    let cell = +data[i][j] + c;
+                    if (cell > 9)
+                        cell = cell % 9;
+                    row += cell.toString();
+                }
+                updatedRows[i] += row;
+            }
+        }
+    }
+    function updateColumns() {
+        for (let c = 1; c < 5; c++) {
+            for (let i = 0; i < updatedRows.length; i++) {
+                let row = "";
+                for (let j = 0; j < updatedRows[i].length; j++) {
+                    let cell = +updatedRows[i][j] + c;
+                    if (cell > 9)
+                        cell = cell % 9;
+                    row += cell.toString();
+                }
+                updatedColumns.push(row);
+            }
+        }
+    }
+}

@@ -8,9 +8,8 @@ dayFifteen(d15_data);
 function dayFifteen(data) {
     const { columnSize, cumulativeGrid, rowSize } = initGridValues(data);
     fillGridWithCumulativeValues(columnSize, cumulativeGrid, data, rowSize);
-    // I have no idea how I actually managed to get this answer.
-    // I mistyped 368 to 361 and I was correct.
-    // Lol
+    const maxValue = cumulativeGrid[cumulativeGrid.length - 1][cumulativeGrid[0].length - 1];
+    console.log(maxValue);
 }
 
 function initGridValues(data) {
@@ -33,10 +32,14 @@ function fillGridWithCumulativeValues(columnSize, cumulativeGrid, data, rowSize)
 
     for (let i = 1; i < columnSize; i++) {
         for (let j = 1; j < rowSize; j++) {
-            const minimumPreviousValue = Math.min(+cumulativeGrid[i - 1][j], +cumulativeGrid[i][j - 1]);
-            const nodeValue = minimumPreviousValue + (+data[i][j]);
-            cumulativeGrid[i][j] = nodeValue;
+            addNextCumulativeValue(i, j);
         }
+    }
+
+    function addNextCumulativeValue(i, j) {
+        const minimumPreviousValue = Math.min(+cumulativeGrid[i - 1][j], +cumulativeGrid[i][j - 1]);
+        const nodeValue = minimumPreviousValue + (+data[i][j]);
+        cumulativeGrid[i][j] = nodeValue;
     }
 }
 

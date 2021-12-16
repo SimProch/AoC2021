@@ -7,14 +7,15 @@ console.log(daySixteen(d16_data));
 function daySixteen(hex) {
     const binary = hex2bin(hex);
     const parsed = parsePacket(binary);
+    console.log(parsed.packetTypeId);
     const versionSum = getPacketVersionSum(parsed, 0);
     return versionSum;
 }
 
 function getPacketVersionSum(parsedPacket) {
-    if (typeof parsedPacket.value == 'number') return parsedPacket.packetVersion;
+    if (!parsedPacket.children) return parsedPacket.packetVersion;
     let result = 0;
-    parsedPacket.value.forEach(i => {
+    parsedPacket.children.forEach(i => {
         result += getPacketVersionSum(i);
     })
     result += parsedPacket.packetVersion
@@ -81,7 +82,8 @@ function parsePacket(binary, maxLengthInBits) {
                 packetVersion,
                 packetTypeId,
                 lengthTypeId,
-                value: subPackets,
+                children: subPackets,
+                value: 0,
                 length: subPacketsLength + 7 + nextPacketLength
             };
             return packet;
@@ -105,10 +107,32 @@ function parsePacket(binary, maxLengthInBits) {
                 packetVersion,
                 packetTypeId,
                 lengthTypeId,
-                value: subPackets,
+                children: subPackets,
                 length: subPacketsLength + 7 + nextPacketLength
             };
+            const value = getPacketValue(packet);
+            packet.value = value;
             return packet;
+        }
+
+        function getPacketValue(packet) {
+            const { packetTypeId } = packet;
+            if (packetTypeId > 4) return getBinaryPacketValue();
+            return getNonBinaryPacketValue() ;
+
+
+            function getBinaryPacketValue() {
+                if (packetTypeId === 5) return packet.children[0].value > packet.children[1].value ? 1 : 0;
+                if (packetTypeId === 6) return packet.children[0].value < packet.children[1].value ? 1 : 0;
+                if (packetTypeId === 7) return packet.children[0].value == packet.children[1].value ? 1 : 0;
+            }
+            
+            function getNonBinaryPacketValue() {
+                if (packetTypeId === 5) return packet.children[0].value > packet.children[1].value ? 1 : 0;
+                if (packetTypeId === 6) return packet.children[0].value < packet.children[1].value ? 1 : 0;
+                if (packetTypeId === 7) return packet.children[0].value == packet.children[1].value ? 1 : 0;
+            }
+
         }
     }
 }

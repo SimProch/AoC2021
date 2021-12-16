@@ -2,24 +2,24 @@ import { d16_data } from "./input.js";
 
 // https://adventofcode.com/2021/day/16
 
+function assert(a,b) { 
+    if (a !== b) console.error("didnt pass");
+};
+
+assert(daySixteen("C200B40A82"), 3);
+assert(daySixteen("04005AC33890"), 54);
+assert(daySixteen("880086C3E88112"), 7);
+assert(daySixteen("CE00C43D881120"), 9);
+assert(daySixteen("D8005AC2A8F0"), 1);
+assert(daySixteen("F600BC2D8F"), 0);
+assert(daySixteen("9C005AC2F8F0"), 0);
+assert(daySixteen("9C0141080250320F1802104A08"), 1);
 console.log(daySixteen(d16_data));
 
 function daySixteen(hex) {
     const binary = hex2bin(hex);
     const parsed = parsePacket(binary);
-    console.log(parsed.packetTypeId);
-    const versionSum = getPacketVersionSum(parsed, 0);
-    return versionSum;
-}
-
-function getPacketVersionSum(parsedPacket) {
-    if (!parsedPacket.children) return parsedPacket.packetVersion;
-    let result = 0;
-    parsedPacket.children.forEach(i => {
-        result += getPacketVersionSum(i);
-    })
-    result += parsedPacket.packetVersion
-    return result;
+    return parsed.value;
 }
 
 function parsePacket(binary, maxLengthInBits) {
@@ -83,9 +83,10 @@ function parsePacket(binary, maxLengthInBits) {
                 packetTypeId,
                 lengthTypeId,
                 children: subPackets,
-                value: 0,
                 length: subPacketsLength + 7 + nextPacketLength
             };
+            const value = getPacketValue(packet);
+            packet.value = value;
             return packet;
         }
 
@@ -128,9 +129,10 @@ function parsePacket(binary, maxLengthInBits) {
             }
             
             function getNonBinaryPacketValue() {
-                if (packetTypeId === 5) return packet.children[0].value > packet.children[1].value ? 1 : 0;
-                if (packetTypeId === 6) return packet.children[0].value < packet.children[1].value ? 1 : 0;
-                if (packetTypeId === 7) return packet.children[0].value == packet.children[1].value ? 1 : 0;
+                if (packetTypeId === 0) return packet.children.reduce((x,y) => x + y.value, 0);
+                if (packetTypeId === 1) return packet.children.reduce((x,y) => x * y.value, 1);
+                if (packetTypeId === 2) return Math.min(...packet.children.map(i => i.value))
+                if (packetTypeId === 3) return Math.max(...packet.children.map(i => i.value))
             }
 
         }

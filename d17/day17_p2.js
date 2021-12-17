@@ -5,38 +5,36 @@ function assert(a,b) {
     if (a !== b) console.error("didnt pass");
 };
 
-assert(daySeventeen(d17_data_test), 45);
+assert(daySeventeen(d17_data_test), 112);
 console.log(daySeventeen(d17_data));
 
 function daySeventeen(data) {
     const { x, y } = data;
     const grid = createGrid(x, y);
     const hits = getShots();
-    const highestVelocities = hits.map(([velocity, angle]) => shootAtTarget(velocity, angle)).filter(i => i !== false);
-    return Math.max(...highestVelocities);
+    const highestVelocities = hits.map(([velocity, angle]) => shootAtTarget(velocity, angle)).filter(Boolean);
+    return highestVelocities.length;
 
     function shootAtTarget(velocity, angle) {
-        const numberOfIterations = velocity;
-        let max = 0;
+        const initialVelocity = velocity;
+        const initialAngle = angle;
         let x = 0;
         let y = 0;
         let isTargetHit = false;
-        for (let i = 0; i < numberOfIterations; i++) {
+        for (let i = 0; i < initialVelocity; i++) {
             x += velocity;
             if (velocity > 0) velocity--;
             y -= angle;
             angle--
-            if (y < max) max = y;
             isTargetHit = targetGotHit(x, y);
             if (isTargetHit) break;
         }
         while (y < grid.length && !isTargetHit) {
             y -= angle;
-            if (y < max) max = y;
             angle--;
             isTargetHit = targetGotHit(x, y);
         }
-        return isTargetHit ? Math.abs(max) : false
+        return isTargetHit ? [initialVelocity, initialAngle] : false;
 
     }
 
@@ -45,8 +43,8 @@ function daySeventeen(data) {
     }
 
     function getShots() {
-        const xs = Array.from({ length: x.to}, (_,i) => i);
-        const ys = Array.from({ length: Math.abs(y.from)}, (_,i) => i);
+        const xs = Array.from({ length: x.to + 1}, (_,i) => i);
+        const ys = Array.from({ length: Math.abs(y.from) * 2 + 1}, (_,i) => i - Math.abs(y.from));
         let result = [];
         for (let i = 0; i < xs.length; i++) {
             for (let j = 0; j < ys.length; j++) {

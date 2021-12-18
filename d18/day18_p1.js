@@ -1,198 +1,147 @@
-import { d18_data, d18_data_test, single_line, single_line_v2 } from "./input.js";
+import * as fs from "fs";
 
-// https://adventofcode.com/2021/day/18
+const input = fs
+    .readFileSync('./input.txt')
+    .toString()
+    .split('\r\n')
+    .filter(line => line !== '');
 
-// dayEighteen(single_line)
-dayEighteen(single_line_v2)
-// dayEighteen(d18_data_test)
-// dayEighteen(d18_data)
-
-function dayEighteen(inputData) {
-    const data = JSON.parse(JSON.stringify(inputData));
-    let tree;
-    while (data.length > 1) {
-        performAddition(data);
-        const current = data[0];
-        tree = getTreeStructure(current);
-        updateTree(tree, 1);
-
-        function updateTree(currentNode, nestLevel) {
-            if (!currentNode) return;
-            const { first, second, $parent } = currentNode;
-            if (first && second) {
-                updateDeeperLevels(currentNode);
-            } 
-            if (nestLevel > 3 && first?.value && second?.value) {
-                explode();
-            }
-
-            function updateDeeperLevels(currentNode) {
-                updateTree(currentNode.first, nestLevel + 1);
-                updateTree(currentNode.second, nestLevel + 1);
-            }
-
-
-
-            function split(node) {
-                const splitValueOne = Math.floor(node.value / 2);
-                const splitValueTwo = Math.ceil(node.value / 2);
-                const nodeToAdd = {};
-                nodeToAdd.first = {
-                    value: splitValueOne,
-                    $parent: nodeToAdd
-                }
-                nodeToAdd.second = {
-                    value: splitValueTwo,
-                    $parent: nodeToAdd
-                }
-                nodeToAdd.$parent = node.$parent;
-                if (node.$parent.second === node) node.$parent.second = nodeToAdd;
-                else node.$parent.first = nodeToAdd;
-                updateDeeperLevels(node);
-            }
-
-            function explode() {
-                if (!first && !second) return;
-                if ($parent.second === currentNode) explodeSecondNode();
-                else explodeFirstNode();
-
-                function explodeFirstNode() {
-                    const closestRight = getClosestRightTree();
-                    if (closestRight) {
-                        closestRight.value += second.value;
-                        if (closestRight.value >= 10) split(closestRight)
-                    }
-
-                    const closestLeft = getClosestLeftTree();
-                    if (closestLeft) {
-                        closestLeft.value += first.value
-                        if (closestLeft.value >= 10) split(closestLeft)
-                    }
-                    $parent.first = {
-                        value: 0,
-                        $parent,
-                    }
-                }
-
-                function explodeSecondNode() {
-                    const closestLeft = getClosestLeftTree();
-                    if (closestLeft) {
-                        closestLeft.value += first.value;
-                        if (closestLeft.value >= 10) split(closestLeft)
-                    }
-                    const closestRight = getClosestRightTree();
-                    if (closestRight) {
-                        closestRight.value += second.value
-                        if (closestRight.value >= 10) split(closestRight)
-                    }
-                    $parent.second = {
-                        value: 0,
-                        $parent
-                    };
-                }
-
-                function getClosestLeftTree() {
-                    if ($parent.first != currentNode) {
-                        let target = $parent.first;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.second;
-                        return target
-                    }
-                    if ($parent.$parent.first != $parent) {
-                        let target = $parent.$parent.first
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.second;
-                        return target
-                    }
-                    if ($parent.$parent.$parent.first != $parent.$parent) {
-                        let target = $parent.$parent.$parent.first;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.second;
-                        return target
-                    }
-                    if ($parent.$parent.$parent.$parent.first != $parent.$parent.$parent) {
-                        let target = $parent.$parent.$parent.$parent.first;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.second;
-                        return target
-                    }
-                    return false
-                }
-
-                function getClosestRightTree() {
-                    if ($parent.second != currentNode) {
-                        let target = $parent.second;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.first;
-                        return target
-                    }
-                    if ($parent.$parent.second != $parent) {
-                        let target = $parent.$parent.second;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.first;
-                        return target
-                    }
-                    if ($parent.$parent.$parent.second != $parent.$parent) {
-                        let target = $parent.$parent.$parent.second;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.first;
-                        return target
-                    }
-                    if ($parent.$parent.$parent.$parent.second != $parent.$parent.$parent) {
-                        let target = $parent.$parent.$parent.$parent.second;
-                        if (target.value != null) return target;
-
-                        while (target && target.value == null) target = target.first;
-                        return target
-                    }
-                    return false
-                }
-            }
-        }
+class TreeNode {
+    constructor(val) {
+        this.val = val;
+        this.left = null;
+        this.right = null;
+        this.parent = null;
     }
-    console.log(tree);
-
 }
 
-function performAddition(data) {
-    const current = data[0];
-    const next = data[1];
-    const result = [current, next];
-    data.splice(1, 1);
-    data[0] = result;
-}
+const constructTree = (str, parent) => {
+    const root = new TreeNode(-1);
+    root.parent = parent;
 
-function getTreeStructure(current) {
-    const first = current[0];
-    const second = current[1];
-    let firstTree;
-    let secondTree;
-    if (Array.isArray(first)) {
-        firstTree = getTreeStructure(first);
+    let open = 0;
+    let leftStr = '';
+    let rightStr = '';
+
+    for (let i = 0; i < str.length; ++i) {
+        if (str[i] === '[') {
+            ++open;
+            if (open > 1) leftStr += str[i];
+        } else if (str[i] === ']') {
+            --open;
+            leftStr += str[i];
+        } else if (str[i] === ',' && open === 1) {
+            rightStr = str.slice(i + 1, -1);
+            break;
+        } else leftStr += str[i];
+    }
+
+    if (leftStr.length > 1) {
+        root.left = constructTree(leftStr, root);
     } else {
-        firstTree = {
-            value: first,
-        }
+        root.left = new TreeNode(parseInt(leftStr));
+        root.left.parent = root;
     }
-    if (Array.isArray(second)) {
-        secondTree = getTreeStructure(second);
+
+    if (rightStr.length > 1) {
+        root.right = constructTree(rightStr, root);
     } else {
-        secondTree = {
-            value: second,
+        root.right = new TreeNode(parseInt(rightStr));
+        root.right.parent = root;
+    }
+
+    return root;
+};
+
+const mergeTrees = (a, b) => {
+    const newRoot = new TreeNode(-1);
+    newRoot.left = a;
+    newRoot.right = b;
+    a.parent = newRoot;
+    b.parent = newRoot;
+    return newRoot;
+};
+
+const getExplodeNode = (node, depth = 0) => {
+    if (!node) return null;
+    if (depth >= 4 && node.val === -1 && node.left.val !== -1 && node.right.val !== -1) return node;
+    return getExplodeNode(node.left, depth + 1) || getExplodeNode(node.right, depth + 1);
+};
+
+const explode = node => {
+    const _explode = (node, prevNode, addVal, dir, traversingUp) => {
+        if (!node[dir]) return;
+
+        if (node[dir] !== prevNode) {
+            if (traversingUp && node[dir].val === -1)
+                _explode(node[dir], null, addVal, dir === 'left' ? 'right' : 'left', false);
+            else if (node[dir].val === -1) _explode(node[dir], null, addVal, dir, traversingUp);
+            else node[dir].val += addVal;
+        } else if (node.parent) {
+            _explode(node.parent, node, addVal, dir, traversingUp);
+        }
+    };
+
+    const leftVal = node.left.val;
+    const rightVal = node.right.val;
+    node.val = 0;
+    node.left = null;
+    node.right = null;
+    _explode(node.parent, node, leftVal, 'left', true);
+    _explode(node.parent, node, rightVal, 'right', true);
+};
+
+const getSplitNode = node => {
+    if (!node) return null;
+    if (node.val > 9) return node;
+    return getSplitNode(node.left) || getSplitNode(node.right);
+};
+
+const split = node => {
+    const val = node.val;
+    node.val = -1;
+    node.left = new TreeNode(Math.floor(val / 2));
+    node.right = new TreeNode(Math.ceil(val / 2));
+    node.left.parent = node;
+    node.right.parent = node;
+};
+
+const reduce = root => {
+    let madeChange = true;
+
+    while (madeChange) {
+        madeChange = false;
+        const explodeNode = getExplodeNode(root);
+
+        if (explodeNode) {
+            explode(explodeNode);
+            madeChange = true;
+        } else {
+            const splitNode = getSplitNode(root);
+            if (splitNode) {
+                split(splitNode);
+                madeChange = true;
+            }
         }
     }
-    const result = {
-        first: firstTree,
-        second: secondTree
+};
+
+const calculateMagnitude = node => {
+    if (!node) return 0;
+    if (node.val !== -1) return node.val;
+    return 3 * calculateMagnitude(node.left) + 2 * calculateMagnitude(node.right);
+};
+
+const p1 = input => {
+    let root = constructTree(input[0]);
+
+    for (let i = 0; i < input.length; ++i) {
+        root = mergeTrees(root, constructTree(input[i], null));
+        reduce(root);
     }
-    result.first.$parent = result;
-    result.second.$parent = result;
-    return result
-}
+
+    return calculateMagnitude(root);
+};
+
+console.log('Part 1:', p1(input));
+console.log('Part 2:', p2(input));

@@ -1,70 +1,54 @@
-import { d18_data, d18_data_test, single_line } from "./input.js";
+import { d18_data, d18_data_test, single_line, single_line_v2 } from "./input.js";
 
 // https://adventofcode.com/2021/day/18
 
-dayEighteen(single_line)
+// dayEighteen(single_line)
+dayEighteen(single_line_v2)
+// dayEighteen(d18_data_test)
 // dayEighteen(d18_data)
 
 function dayEighteen(inputData) {
     const data = JSON.parse(JSON.stringify(inputData));
+    let tree;
     while (data.length > 1) {
         performAddition(data);
         const current = data[0];
-        const tree = getTreeStructure(current);
+        tree = getTreeStructure(current);
         updateTree(tree, 1);
-        console.log(tree);
-
 
         function updateTree(currentNode, nestLevel) {
             if (!currentNode) return;
             const { first, second, $parent } = currentNode;
-            if (nestLevel <= 4) {
+            if (first && second) {
                 updateDeeperLevels(currentNode);
-            } else {
+            } 
+            if (nestLevel > 3 && first?.value && second?.value) {
                 explode();
-            }
-            const splitFirst = first?.value && first.value >= 10
-            const splitSecond = second?.value && second.value >= 10
-
-            if (splitFirst || splitSecond) split();
-
-            function split() {
-                if (splitFirst) {
-                    const splitValueOne = Math.floor(first.value / 2);
-                    const splitValueTwo = Math.ceil(first.value / 2);
-                    const nodeToAdd = {};
-                    nodeToAdd.first = {
-                        value: splitValueOne,
-                        $parent: nodeToAdd
-                    }
-                    nodeToAdd.second = {
-                        value: splitValueTwo,
-                        $parent: nodeToAdd
-                    }
-                    nodeToAdd.$parent = currentNode
-                    currentNode.first = nodeToAdd
-                }
-                if (splitSecond) {
-                    const splitValueOne = Math.floor(second.value / 2);
-                    const splitValueTwo = Math.ceil(second.value / 2);
-                    const nodeToAdd = {};
-                    nodeToAdd.first = {
-                        value: splitValueOne,
-                        $parent: nodeToAdd
-                    }
-                    nodeToAdd.second = {
-                        value: splitValueTwo,
-                        $parent: nodeToAdd
-                    }
-                    nodeToAdd.$parent = currentNode
-                    currentNode.second = nodeToAdd
-                }
-                updateDeeperLevels(currentNode);
             }
 
             function updateDeeperLevels(currentNode) {
                 updateTree(currentNode.first, nestLevel + 1);
                 updateTree(currentNode.second, nestLevel + 1);
+            }
+
+
+
+            function split(node) {
+                const splitValueOne = Math.floor(node.value / 2);
+                const splitValueTwo = Math.ceil(node.value / 2);
+                const nodeToAdd = {};
+                nodeToAdd.first = {
+                    value: splitValueOne,
+                    $parent: nodeToAdd
+                }
+                nodeToAdd.second = {
+                    value: splitValueTwo,
+                    $parent: nodeToAdd
+                }
+                nodeToAdd.$parent = node.$parent;
+                if (node.$parent.second === node) node.$parent.second = nodeToAdd;
+                else node.$parent.first = nodeToAdd;
+                updateDeeperLevels(node);
             }
 
             function explode() {
@@ -73,12 +57,17 @@ function dayEighteen(inputData) {
                 else explodeFirstNode();
 
                 function explodeFirstNode() {
-                    $parent.second = {
-                        value: $parent.second.value + second.value,
-                        $parent
-                    };
+                    const closestRight = getClosestRightTree();
+                    if (closestRight) {
+                        closestRight.value += second.value;
+                        if (closestRight.value >= 10) split(closestRight)
+                    }
+
                     const closestLeft = getClosestLeftTree();
-                    if (closestLeft) closestLeft.value += first.value
+                    if (closestLeft) {
+                        closestLeft.value += first.value
+                        if (closestLeft.value >= 10) split(closestLeft)
+                    }
                     $parent.first = {
                         value: 0,
                         $parent,
@@ -86,12 +75,16 @@ function dayEighteen(inputData) {
                 }
 
                 function explodeSecondNode() {
-                    $parent.first = {
-                        value: $parent.first.value + first.value,
-                        $parent
-                    };
+                    const closestLeft = getClosestLeftTree();
+                    if (closestLeft) {
+                        closestLeft.value += first.value;
+                        if (closestLeft.value >= 10) split(closestLeft)
+                    }
                     const closestRight = getClosestRightTree();
-                    if (closestRight) closestRight.value += second.value
+                    if (closestRight) {
+                        closestRight.value += second.value
+                        if (closestRight.value >= 10) split(closestRight)
+                    }
                     $parent.second = {
                         value: 0,
                         $parent
@@ -99,33 +92,73 @@ function dayEighteen(inputData) {
                 }
 
                 function getClosestLeftTree() {
-                    if ($parent.$parent.first != $parent) return $parent.$parent.first
-                    if ($parent.$parent.$parent.first != $parent.$parent) return $parent.$parent.$parent.second
-                    if ($parent.$parent.$parent.$parent.first != $parent.$parent.$parent) return $parent.$parent.$parent.$parent.second
+                    if ($parent.first != currentNode) {
+                        let target = $parent.first;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.second;
+                        return target
+                    }
+                    if ($parent.$parent.first != $parent) {
+                        let target = $parent.$parent.first
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.second;
+                        return target
+                    }
+                    if ($parent.$parent.$parent.first != $parent.$parent) {
+                        let target = $parent.$parent.$parent.first;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.second;
+                        return target
+                    }
+                    if ($parent.$parent.$parent.$parent.first != $parent.$parent.$parent) {
+                        let target = $parent.$parent.$parent.$parent.first;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.second;
+                        return target
+                    }
                     return false
                 }
 
                 function getClosestRightTree() {
-                    if ($parent.$parent.second != $parent) return $parent.$parent.first
+                    if ($parent.second != currentNode) {
+                        let target = $parent.second;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.first;
+                        return target
+                    }
+                    if ($parent.$parent.second != $parent) {
+                        let target = $parent.$parent.second;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.first;
+                        return target
+                    }
                     if ($parent.$parent.$parent.second != $parent.$parent) {
-                        const target = $parent.$parent.$parent.second;
-                        if (!Array.isArray(target.first)) return target.first;
-                        if (!Array.isArray(target.first.first)) return target.first.first;
-                        if (!Array.isArray(target.first.first.first)) return target.first.first.first;
-                        if (!Array.isArray(target.first.first.first.first)) return target.first.first.first.first;
+                        let target = $parent.$parent.$parent.second;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.first;
+                        return target
                     }
                     if ($parent.$parent.$parent.$parent.second != $parent.$parent.$parent) {
-                        const target = $parent.$parent.$parent.$parent.second;
-                        if (!Array.isArray(target.first)) return target.first;
-                        if (!Array.isArray(target.first.first)) return target.first.first;
-                        if (!Array.isArray(target.first.first.first)) return target.first.first.first;
-                        if (!Array.isArray(target.first.first.first.first)) return target.first.first.first.first;
+                        let target = $parent.$parent.$parent.$parent.second;
+                        if (target.value != null) return target;
+
+                        while (target && target.value == null) target = target.first;
+                        return target
                     }
                     return false
                 }
             }
         }
     }
+    console.log(tree);
+
 }
 
 function performAddition(data) {

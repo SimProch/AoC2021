@@ -1,10 +1,30 @@
 import * as fs from "fs";
 
-const input = fs
-    .readFileSync('./input.txt')
-    .toString()
-    .split('\r\n')
-    .filter(line => line !== '');
+const input = getInput();
+
+function getInput() {
+    return fs
+        .readFileSync('./input.txt')
+        .toString()
+        .split('\r\n')
+        .filter(line => line !== '');
+}
+
+function dayEighteen(input) {
+    let maxMagnitude = 0;
+
+    for (let i = 0; i < input.length; i++) {
+        for (let j = 0; j < input.length; j++) {
+            const root = mergeTrees(constructTree(input[i], null), constructTree(input[j], null));
+            reduce(root);
+            maxMagnitude = Math.max(maxMagnitude, calculateMagnitude(root));
+        }
+    }
+
+    return maxMagnitude;
+};
+
+console.log('Part 2:', dayEighteen(input));
 
 class TreeNode {
     constructor(val) {
@@ -15,7 +35,7 @@ class TreeNode {
     }
 }
 
-const constructTree = (str, parent) => {
+function constructTree(string, parent) {
     const root = new TreeNode(-1);
     root.parent = parent;
 
@@ -51,9 +71,9 @@ const constructTree = (str, parent) => {
     }
 
     return root;
-};
+}
 
-const mergeTrees = (a, b) => {
+function mergeTrees(a, b) {
     const newRoot = new TreeNode(-1);
     newRoot.left = a;
     newRoot.right = b;
@@ -62,13 +82,13 @@ const mergeTrees = (a, b) => {
     return newRoot;
 };
 
-const getExplodeNode = (node, depth = 0) => {
+function getExplodeNode(node, depth = 0) {
     if (!node) return null;
     if (depth >= 4 && node.val === -1 && node.left.val !== -1 && node.right.val !== -1) return node;
     return getExplodeNode(node.left, depth + 1) || getExplodeNode(node.right, depth + 1);
 };
 
-const explode = node => {
+function explode(node) {
     const _explode = (node, prevNode, addVal, dir, traversingUp) => {
         if (!node[dir]) return;
 
@@ -91,13 +111,13 @@ const explode = node => {
     _explode(node.parent, node, rightVal, 'right', true);
 };
 
-const getSplitNode = node => {
+function getSplitNode(node) {
     if (!node) return null;
     if (node.val > 9) return node;
     return getSplitNode(node.left) || getSplitNode(node.right);
 };
 
-const split = node => {
+function split(node) {
     const val = node.val;
     node.val = -1;
     node.left = new TreeNode(Math.floor(val / 2));
@@ -106,7 +126,7 @@ const split = node => {
     node.right.parent = node;
 };
 
-const reduce = root => {
+function reduce(root) {
     let madeChange = true;
 
     while (madeChange) {
@@ -126,35 +146,8 @@ const reduce = root => {
     }
 };
 
-const calculateMagnitude = node => {
+function calculateMagnitude(node) {
     if (!node) return 0;
     if (node.val !== -1) return node.val;
     return 3 * calculateMagnitude(node.left) + 2 * calculateMagnitude(node.right);
 };
-
-const p1 = input => {
-    let root = constructTree(input[0]);
-
-    for (let i = 0; i < input.length; i++) {
-        root = mergeTrees(root, constructTree(input[i], null));
-        reduce(root);
-    }
-
-    return calculateMagnitude(root);
-};
-
-const p2 = input => {
-    let maxMagnitude = 0;
-
-    for (let i = 0; i < input.length; i++) {
-        for (let j = 0; j < input.length; j++) {
-            const root = mergeTrees(constructTree(input[i], null), constructTree(input[j], null));
-            reduce(root);
-            maxMagnitude = Math.max(maxMagnitude, calculateMagnitude(root));
-        }
-    }
-
-    return maxMagnitude;
-};
-
-console.log('Part 2:', p2(input));

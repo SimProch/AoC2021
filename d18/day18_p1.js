@@ -1,11 +1,6 @@
 import * as fs from "fs";
 
-const input = fs
-    .readFileSync('./input.txt')
-    .toString()
-    .split('\r\n')
-    .filter(line => line !== '');
-
+const input = getInput();
 class TreeNode {
     constructor(val) {
         this.val = val;
@@ -15,45 +10,69 @@ class TreeNode {
     }
 }
 
-const constructTree = (str, parent) => {
+function getInput() {
+    return fs
+        .readFileSync('./input.txt')
+        .toString()
+        .split('\r\n')
+        .filter(line => line !== '');
+}
+
+console.log('Part 1:', dayEighteen(input));
+
+
+function dayEighteen(input) {
+    let root = constructTree(input[0]);
+
+    for (let i = 0; i < input.length; ++i) {
+        root = mergeTrees(root, constructTree(input[i], null));
+        reduce(root);
+    }
+
+    return calculateMagnitude(root);
+};
+
+
+function constructTree(string, parent) {
     const root = new TreeNode(-1);
     root.parent = parent;
 
     let open = 0;
-    let leftStr = '';
-    let rightStr = '';
+    let leftString = '';
+    let rightString = '';
 
-    for (let i = 0; i < str.length; ++i) {
-        if (str[i] === '[') {
-            ++open;
-            if (open > 1) leftStr += str[i];
-        } else if (str[i] === ']') {
-            --open;
-            leftStr += str[i];
-        } else if (str[i] === ',' && open === 1) {
-            rightStr = str.slice(i + 1, -1);
+    for (let i = 0; i < string.length; i++) {
+        const current = string[i]
+        if (current === '[') {
+            open++;
+            if (open > 1) leftString += current;
+        } else if (current === ']') {
+            open--;
+            leftString += current;
+        } else if (current === ',' && open === 1) {
+            rightString = string.slice(i + 1, -1);
             break;
-        } else leftStr += str[i];
+        } else leftString += current;
     }
 
-    if (leftStr.length > 1) {
-        root.left = constructTree(leftStr, root);
+    if (leftString.length > 1) {
+        root.left = constructTree(leftString, root);
     } else {
-        root.left = new TreeNode(parseInt(leftStr));
+        root.left = new TreeNode(parseInt(leftString));
         root.left.parent = root;
     }
 
-    if (rightStr.length > 1) {
-        root.right = constructTree(rightStr, root);
+    if (rightString.length > 1) {
+        root.right = constructTree(rightString, root);
     } else {
-        root.right = new TreeNode(parseInt(rightStr));
+        root.right = new TreeNode(parseInt(rightString));
         root.right.parent = root;
     }
 
     return root;
-};
+}
 
-const mergeTrees = (a, b) => {
+function mergeTrees(a, b) {
     const newRoot = new TreeNode(-1);
     newRoot.left = a;
     newRoot.right = b;
@@ -62,13 +81,35 @@ const mergeTrees = (a, b) => {
     return newRoot;
 };
 
-const getExplodeNode = (node, depth = 0) => {
+
+function reduce(root) {
+    let madeChange = true;
+
+    while (madeChange) {
+        madeChange = false;
+        const explodeNode = getExplodeNode(root);
+
+        if (explodeNode) {
+            explode(explodeNode);
+            madeChange = true;
+        } else {
+            const splitNode = getSplitNode(root);
+            if (splitNode) {
+                split(splitNode);
+                madeChange = true;
+            }
+        }
+    }
+};
+
+
+function getExplodeNode(node, depth = 0) {
     if (!node) return null;
     if (depth >= 4 && node.val === -1 && node.left.val !== -1 && node.right.val !== -1) return node;
     return getExplodeNode(node.left, depth + 1) || getExplodeNode(node.right, depth + 1);
 };
 
-const explode = node => {
+function explode(node) {
     const _explode = (node, prevNode, addVal, dir, traversingUp) => {
         if (!node[dir]) return;
 
@@ -91,13 +132,13 @@ const explode = node => {
     _explode(node.parent, node, rightVal, 'right', true);
 };
 
-const getSplitNode = node => {
+function getSplitNode(node) {
     if (!node) return null;
     if (node.val > 9) return node;
     return getSplitNode(node.left) || getSplitNode(node.right);
 };
 
-const split = node => {
+function split(node) {
     const val = node.val;
     node.val = -1;
     node.left = new TreeNode(Math.floor(val / 2));
@@ -106,42 +147,8 @@ const split = node => {
     node.right.parent = node;
 };
 
-const reduce = root => {
-    let madeChange = true;
-
-    while (madeChange) {
-        madeChange = false;
-        const explodeNode = getExplodeNode(root);
-
-        if (explodeNode) {
-            explode(explodeNode);
-            madeChange = true;
-        } else {
-            const splitNode = getSplitNode(root);
-            if (splitNode) {
-                split(splitNode);
-                madeChange = true;
-            }
-        }
-    }
-};
-
-const calculateMagnitude = node => {
+function calculateMagnitude(node) {
     if (!node) return 0;
     if (node.val !== -1) return node.val;
     return 3 * calculateMagnitude(node.left) + 2 * calculateMagnitude(node.right);
 };
-
-const p1 = input => {
-    let root = constructTree(input[0]);
-
-    for (let i = 0; i < input.length; ++i) {
-        root = mergeTrees(root, constructTree(input[i], null));
-        reduce(root);
-    }
-
-    return calculateMagnitude(root);
-};
-
-console.log('Part 1:', p1(input));
-console.log('Part 2:', p2(input));

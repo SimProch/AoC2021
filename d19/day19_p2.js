@@ -7,22 +7,29 @@ function dayNineteen(input) {
     const relativeKeys = Object.keys(relative);
     const absolute = getBeaconsRelativeToZero(relative, relativeKeys);
     getAllAbsoluteBeacons();
-    const beaconPositions = getUniqueBeacons();
-    return beaconPositions.length;
+    const maxScannerDistance = getScannerDistance();
+    console.log(maxScannerDistance);
 
-    function getUniqueBeacons() {
-        const values = Object.values(absolute);
-        let duplicateResult = [];
-        for (let i = 0; i < values.length; i++) {
-            duplicateResult = [...duplicateResult,...values[i]]
+    function getScannerDistance() {
+        const scanners = Object.keys(absolute);
+        const scannerPositions = [];
+        for (let scanner of scanners) {
+            const [x, y, z] = scanner.split(",").map(i => +i);
+            scannerPositions.push([x, y, z]);
         }
-        const result = {};
-        for (let i = 0; i < duplicateResult.length; i++) {
-            const key = duplicateResult[i].join();
-            result[key] = true;
+        let max = 0;
+        for (let i = 0; i < scannerPositions.length; i++) {
+            for (let j = 0; j < scannerPositions.length; j++) {
+                if (i == j) continue;
+                const previous = scannerPositions[i];
+                const next = scannerPositions[j];
+                const scannerDistances = subtractPositions(previous, next);
+                const absolute = scannerDistances.map(i => Math.abs(i))
+                const sum = absolute.reduce((x, y) => x + y, 0);
+                max = Math.max(max, sum)
+            }
         }
-
-        return Object.keys(result);
+        return max;
     }
 
 
@@ -109,7 +116,7 @@ function getBeaconsRelativeToZero(relative, keys) {
 
 
 const getKey = (x) => x.join()
-// const input = getInput(true);
-const input = getInput(false);
-const d1 = dayNineteen(input);
-console.log(d1);
+const input = getInput(true);
+// const input = getInput(false);
+const d2 = dayNineteen(input);
+console.log(d2);

@@ -116,7 +116,7 @@ function getBeaconsRelativeToZero(relative, keys) {
 
 
 const getKey = (x) => x.join()
-const input = getInput(true);
-// const input = getInput(false);
+// const input = getInput(true);
+const input = getInput(false);
 const d2 = dayNineteen(input);
 console.log(d2);

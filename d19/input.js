@@ -4,12 +4,10 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const input = getInput();
 
-
-function getInput() {
+export function getInput(test) {
     const input = fs
-        .readFileSync(path.join(__dirname, './input.txt'))
+        .readFileSync(path.join(__dirname, test ? './testInput.txt' : './input.txt'))
         .toString()
         .split('\r\n');
 
@@ -32,5 +30,5 @@ function getInput() {
         const [x, y, z] = current.split(",")
         result[lastKey].push([+x, +y, +z])
     }
-    console.log(result);
+    return result;
 }

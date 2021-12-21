@@ -1,89 +1,75 @@
 import { getInput } from "./input.js";
+import { movingFrom } from './utils.js';
 
-const BOARD_START = 1;
-const BOARD_END = 10;
-const DICE_START = 1;
-const DICE_END = 100;
-
+const possibleMoves = movingFrom();
 const testInput = getInput(true);
 const realInput = getInput(false);
+const cache = {};
 
-console.log(dayTwentyOne(testInput));
+// console.log(dayTwentyOne(testInput));
+console.time();
 console.log(dayTwentyOne(realInput));
+console.timeEnd();
 
 
 function dayTwentyOne(input) {
     let p1Position = +input[0]
     let p2Position = +input[1]
-    let p1Points = 0;
-    let p2Points = 0;
-    let diceValue = 0;
-    let diceRolls = 0;
-    let isPlayerOneTurn = true;
 
-    while (p1Points < 1000 && p2Points < 1000) {
-        diceRolls += 3;
-        diceValue += 3;
-        if (diceValue <= 100) updatePositionForRegular();
-        else updatePositionWhenTransforming();
-        isPlayerOneTurn = !isPlayerOneTurn;
-    }
+    const rollWins = [0,0];
+    performRoll(p1Position, 0, p2Position, 0, true, rollWins);
 
-    return getResult(p1Points, p2Points,diceRolls);
+    return getResult(rollWins[0], rollWins[1]);
 
-    function updatePositionForRegular() {
+    function performRoll(p1Position, p1Points, p2Position, p2Points, isPlayerOneTurn, rollWins) {
+        const cacheKey = `${p1Position}__${p1Points}__${p2Position}__${p2Points}__${isPlayerOneTurn}`;
+        let p1Wins = 0;
+        let p2Wins = 0;
+        if (cache[cacheKey]) {
+            rollWins[0] += cache[cacheKey].p1Wins
+            rollWins[1] += cache[cacheKey].p2Wins
+            return [cache[cacheKey].p1Wins, cache[cacheKey].p2Wins];
+        }
         if (isPlayerOneTurn) {
-            p1Position += 3 * diceValue - 3;
-            if (p1Position % BOARD_END === 0) p1Position = 10;
-            else p1Position = p1Position % 10;
-            p1Points += p1Position;
+            const p1p = p1Points;
+            const p1Options = possibleMoves[p1Position];
+            for (let key in p1Options) {
+                let nextPosition = p1Options[key].landsOn;
+                p1Points = p1p + nextPosition;
+                if (p1Points < 21) {
+                    const [p1, p2] = performRoll(nextPosition, p1Points, p2Position, p2Points, !isPlayerOneTurn, rollWins);
+                    p1Wins += p1;
+                    p2Wins += p2;
+                } else {
+                    rollWins[0]++;
+                    p1Wins++;
+                }
+            }
         }
         else {
-            p2Position += 3 * diceValue - 3;
-            if (p2Position % BOARD_END === 0) p2Position = 10;
-            else p2Position = p2Position % 10;
-            p2Points += p2Position;
-        }
-    }
-
-    function updatePositionWhenTransforming() {
-        switch (diceValue) {
-            case 101:
-                if (isPlayerOneTurn) p1Position += diceValue - 2 + diceValue - 1 + 1 
-                else p2Position += diceValue - 2 + diceValue - 1 + 1 
-                diceValue = 1;
-                break;
-            case 102:
-                if (isPlayerOneTurn) p1Position += diceValue - 2 + 1 + 2
-                else p2Position += diceValue - 2 + 1 + 2 
-                diceValue = 2;
-                break;
-            case 103:
-                if (isPlayerOneTurn) p1Position +=  1 + 2 + 3 
-                else p2Position += 1 + 2 + 3;
-                diceValue = 3;
-                break;
-            default:
-                throw new Error("Some error happened");
-        }
-        restartPosition();
-
-        function restartPosition() {
-            if (isPlayerOneTurn) {
-                if (p1Position % BOARD_END === 0) p1Position = 10;
-                else p1Position = p1Position % 10;
-                p1Points += p1Position;
-            }
-            else {
-                if (p2Position % BOARD_END === 0) p2Position = 10;
-                else p2Position = p2Position % 10;
-                p2Points += p2Position;
+            const p2p = p2Points;
+            const p2Options = possibleMoves[p2Position];
+            for (let key in p2Options) {
+                let nextPosition = p2Options[key].landsOn;
+                p2Points = p2p + nextPosition;
+                if (p2Points < 21) {
+                    const [p1, p2] = performRoll(p1Position, p1Points, nextPosition, p2Points, !isPlayerOneTurn, rollWins);
+                    p1Wins += p1;
+                    p2Wins += p2;
+                } else {
+                    rollWins[1]++;
+                    p2Wins++;
+                }
             }
         }
+        cache[cacheKey] = {
+            p1Wins,
+            p2Wins
+        }
+        return [p1Wins, p2Wins];
     }
 }
 
-function getResult(p1Points, p2Points, diceRolls) {
-    if (p1Points > p2Points) return p2Points * diceRolls;
-    return p1Points * diceRolls;
-}
+function getResult(p1Wins, p2Wins) {
+    return p1Wins > p2Wins ? p1Wins : p2Wins
+} 

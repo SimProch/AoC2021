@@ -1,67 +1,39 @@
+"use strict"
 import { getInput } from "./input.js";
+import { getMinMaxAsArray } from "./utils.js";
 
 const testInput = getInput(true);
-const dict = {};
-// dayTwentyTwo(testInput);
-const realInput = getInput(false);
-dayTwentyTwo(realInput);
+console.log(dayTwentyTwo(testInput));
+const dayInput = getInput(false);
+const p1 = dayInput.filter(cuboid => getMinMaxAsArray(cuboid).some(i => Math.abs(i) <= 50))
+const part1Solution = dayTwentyTwo(p1);
+const part2Solution = dayTwentyTwo(dayInput);
+console.log(part1Solution);
+console.log(part2Solution);
 
+function dayTwentyTwo(cuboids) {
+    const finalCuboids = getTurnedOnCuboids();
+    return finalCuboids.reduce((x, y) => x + y.volume(), 0)
 
-function dayTwentyTwo(input) {
-    
-    for (let i = 0; i < input.length; i++) {
-        const current = input[i];
-        const inRange = isInRange(current);
-        if (!inRange) continue;
-        iterateOverX(current);
-    }
-    const values = Object.values(dict);
-    const on = values.filter(i => i === 'on')
-    const off = values.filter(i => i === 'off')
-    console.log(on.length)
-    console.log(off.length)
+    function getTurnedOnCuboids() {
+        let lit = [];
 
-    
-    function isInRange(current) {
-        const isXOutRange = isOutOfRange(current.x);
-        const isYOutRange = isOutOfRange(current.y);
-        const isZOutRange = isOutOfRange(current.z);
-        const inRange = !(isXOutRange || isYOutRange || isZOutRange);
-        return inRange
+        cuboids.forEach(inputCuboid => {
+            const newLitCuboids = [];
+            lit.forEach(litCuboid => {
+                if (litCuboid.isOverlapping(inputCuboid)){
+                    const cutCuboids = litCuboid.splitCuboid(inputCuboid);
+                    newLitCuboids.push(...cutCuboids);
+                } else {
+                    newLitCuboids.push(litCuboid);
+                }
+            });
+            if (inputCuboid.status) {
+                newLitCuboids.push(inputCuboid);
+            }
+            lit = newLitCuboids;
+        });
 
-        function isOutOfRange(current) {
-            return (current.from <= -50 || current.from >= 50) && (current.to <= -50 || current.to >= 50);
-        }
-    }
-      
-
-    function iterateOverX(current) {
-        const { from, to } = current.x;
-        const lower = from < to ? from : to;
-        const higher = from < to ? to : from;
-        for (let i = lower; i <= higher; i++) {
-            iterateOverY(current, i);
-        }
-    }
-
-    function iterateOverY(current, xValue) {
-        const { from, to } = current.y;
-        const lower = from < to ? from : to;
-        const higher = from < to ? to : from;
-        for (let i = lower; i <= higher; i++) {
-            iterateOverZ(current, xValue, i);
-        }
-        
-    }
-
-    function iterateOverZ(current, xValue, yValue) {
-        const { from, to } = current.z;
-        const lower = from < to ? from : to;
-        const higher = from < to ? to : from;
-        for (let i = lower; i <= higher; i++) {
-            const vals = [xValue, yValue, i];
-            const key = vals.join(",");
-            dict[key] = current.status
-        }
+        return lit;
     }
 }
